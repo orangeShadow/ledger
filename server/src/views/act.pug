@@ -1,0 +1,72 @@
+extends layout-print
+
+block content 
+  div    
+    div(style="font-weight: bold; font-size: 16pt; padding-left:5px;")=invoice.getActTitle()
+    div(style="background-color:#000000; width:100%; font-size:1px; height:2px;") &nbsp;
+    br
+
+    table(width="100%")
+        tr
+            td(style="width: 30mm;")
+                div(style=" padding-left:2px;") Исполнитель        
+            td(valign="top")
+                div(style="font-weight:bold;  padding-left:2px;")=requisites.executor()
+        tr         
+            td(colspan=2) &nbsp;                     
+        tr
+            td(style="width: 30mm;")
+                div(style=" padding-left:2px;") Заказчик:        
+            td(valign="top")
+                div(style="font-weight:bold;  padding-left:2px;" rowspan=2)=invoice.getCustomerLine()
+        tr
+            td(colspan=2) &nbsp;             
+        tr
+            td(style="width: 30mm;")
+                div(style=" padding-left:2px;") Основание:        
+            td(valign="top")
+                div(style="font-weight:bold;  padding-left:2px;" rowspan=2)=invoice.customer.reason
+    br
+    
+    table(class="invoice_items" width="100%" cellpadding="2" cellspacing="2")
+        thead
+            tr
+                th(style="width:13mm;") №                
+                th Услуги
+                th(style="width:20mm;") Кол-во
+                th(style="width:17mm;") Ед.
+                th(style="width:27mm;") Цена
+                th(style="width:27mm;") Сумма        
+        tbody
+            each raw,index in invoice.services
+                tr
+                    td(align="center")=index+1                    
+                    td(align="left")=raw.title
+                    td(align="right")=raw.quantity
+                    td(align="left")=raw.unit?raw.unit:"час"
+                    td(align="right")=new Intl.NumberFormat('ru-RU').format(raw.price)
+                    td(align="right")=new Intl.NumberFormat('ru-RU').format(raw.price*raw.quantity)
+    br
+    table(border="0" width="100%" cellpadding="1" cellspacing="1")
+        tr
+            td
+            td(style="width:37mm; font-weight:bold;  text-align:right;") Итого:
+            td(style="width:27mm; font-weight:bold;  text-align:right;")=new Intl.NumberFormat('ru-RU').format(invoice.getTotal())
+        tr
+            td
+            td(style="width:37mm; font-weight:bold;  text-align:right;") Без налога(НДС) 
+            td(style="width:27mm; font-weight:bold;  text-align:right;")        
+    br
+    div="Всего наименований "+invoice.services.length+" на сумму "+new Intl.NumberFormat('ru-RU').format(invoice.getTotal())+" рублей."
+    div=invoice.getTotalString()
+    br
+    div Все услуги выполнены полностью в срок. Заказчик претензий по объему, качетву и срокам оказанных услуг не имеет
+    div(style="background-color:#000000; width:100%; font-size:1px; height:2px;") &nbsp;
+    br
+    br
+    table(width="100%")
+        tr
+            td Исполнитель ________________________ 
+            td(align="right") Заказчик ___________________________ 
+    
+    //div(style="width: 85mm;text-align:center;") М.П.
