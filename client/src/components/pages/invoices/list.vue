@@ -27,6 +27,9 @@
                    class="button is-small">
                     <b-icon icon="printer" size="is-small"></b-icon> <span> Акт</span>
                 </a>
+                <a href="#!" @click="remove(props.row._id)" class="button is-danger is-small">
+                    <b-icon icon="delete" size="is-small"></b-icon>
+                </a>
             </b-table-column>
         </template>
     </b-table>
@@ -46,7 +49,7 @@ export default {
     }
   },
   methods: {
-    async getCustomers () {
+    async getInvoices () {
       let response
       if (this.$route.params.id) {
         response = await InvoiceService.fetchInvoicesByCustomer(this.$route.params.id)
@@ -58,10 +61,13 @@ export default {
     printDate (date) {
       let dt = new Moment(date)
       return dt.format('DD.MM.YYYY')
+    },
+    async remove (id) {
+      await InvoiceService.deleteInvoice(id).then(({data}) => { this.getInvoices() })
     }
   },
   mounted () {
-    this.getCustomers()
+    this.getInvoices()
   }
 }
 </script>

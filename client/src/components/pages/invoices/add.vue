@@ -108,8 +108,10 @@ export default {
   },
   methods: {
     async save () {
+      let self = this
       await InvoiceService.addInvoiceByCustomerId(this.$route.params.id, this.invoice).then(({data}) => {
-        this.$route.path(`customer/${data.customer._id}/invoices`)
+        self.invoice = data
+        self.$router.push({path: `/customer/${data.customer._id}/invoices`})
       }).catch((e) => {
         if (e.response && e.response.data) {
           this.errors = e.response.data.errors
@@ -125,13 +127,13 @@ export default {
   },
   beforeRouteLeave (to, from, next) {
     if (typeof this.invoice._id !== 'undefined') {
-      next()
+      return next()
     }
     const answer = window.confirm('Данные не сохранены вы действительно хотите покинуть эту страницу?')
     if (answer) {
-      next()
+      return next()
     } else {
-      next(false)
+      return next(false)
     }
   }
 }
