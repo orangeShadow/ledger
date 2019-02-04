@@ -15,5 +15,8 @@ export default {
   },
   addInvoiceByCustomerId (customerId, invoice) {
     return api().post(`api/customer/${customerId}/invoice`, invoice)
+  },
+  deleteInvoice (invoiceId) {
+    return api().delete(`api/invoice/${invoiceId}`)
   }
 }
