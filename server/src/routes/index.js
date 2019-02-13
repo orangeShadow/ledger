@@ -18,7 +18,6 @@ function capitalizeFirstLetter(string) {
 moment.locale('ru-RU');
 
 router.get('/invoice/:id', function(req, res, next) {
-
   Invoice.findOne({'_id':new ObjectID(req.params.id)}, function(err, invoice){
     res.render('invoice', {
       invoice,
@@ -27,9 +26,7 @@ router.get('/invoice/:id', function(req, res, next) {
   })
 });
 
-
 router.get('/act/:id', function(req, res, next) {
-
   Invoice.findOne({'_id':new ObjectID(req.params.id)}, function(err, invoice){
     res.render('act', {
       invoice,
