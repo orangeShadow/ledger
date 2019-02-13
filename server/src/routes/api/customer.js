@@ -38,17 +38,15 @@ router.post('/:id/invoice', (req,res) => {
   Customer.findOne({"_id": new ObjectID(req.params.id)}, function(err, customer) {
     if (err) res.send('error', {error: err});
 
-    let invocie = new Invoice(req.body);
-    invocie.customer = customer;
-    let error = invocie.validateSync();
-    invocie.save().then( (doc) =>{
-      return res.send({invocie:doc});
+    let invoice = new Invoice(req.body);
+    invoice.customer = customer;
+    let error = invoice.validateSync();
+    invoice.save().then( (doc) =>{
+      return res.send(doc);
     }, (e) => {
       return res.send(errorHandler.handler(e), 422).status(422);
     });
-
-  })
-
+  });
 });
 
 router.get('/:id', function(req, res, next) {
