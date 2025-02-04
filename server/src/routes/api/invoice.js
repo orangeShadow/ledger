@@ -48,7 +48,7 @@ router.post('/:id', function (req, res, next) {
 
 router.delete('/:id', function (req, res, next) {
   Invoice.findByIdAndDelete({'_id':new ObjectID(req.params.id)}, function(err, invoice) {
-    return res.send(invoice);
+    return res.send(invoice)
   });
 });
 

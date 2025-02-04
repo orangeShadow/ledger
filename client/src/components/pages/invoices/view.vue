@@ -108,8 +108,10 @@ export default {
   methods: {
     async getInvoice () {
       const response = await InvoiceService.fetchInvoice(this.$route.params.id)
-      this.invoice = response.data.invoice
-      this.invoice.invoice_date = moment(this.invoice.invoice_date).format('YYYY-MM-DD')
+      this.invoice = response.data
+      if (this.invoice.invoice_date) {
+        this.invoice.invoice_date = moment(this.invoice.invoice_date).format('YYYY-MM-DD')
+      }
     },
     async save () {
       await InvoiceService.updateInvoice(this.invoice).then(({data}) => {

@@ -86,6 +86,7 @@ export default {
   name: 'InvoiceAdd',
   data () {
     return {
+      lastInvoice: null,
       invoiceInputFields: [
         {
           title: 'Номер счета',
@@ -99,6 +100,8 @@ export default {
         }
       ],
       invoice: {
+        number: null,
+        invoice_date: null,
         services: []
       },
       addServiceShow: false,
@@ -106,7 +109,21 @@ export default {
       errors: {}
     }
   },
+  mounted () {
+    console.log('тут')
+    this.loadLastInvoice()
+  },
   methods: {
+    loadLastInvoice () {
+      let self = this
+      InvoiceService.getLastInvoice(this.$route.params.id).then(({data}) => {
+        self.lastInvoice = data.data
+        if (self.lastInvoice && self.lastInvoice.number) {
+          self.invoice.number = parseInt(self.lastInvoice.number) + 1
+          self.invoice.services = self.lastInvoice.services
+        }
+      })
+    },
     async save () {
       let self = this
       await InvoiceService.addInvoiceByCustomerId(this.$route.params.id, this.invoice).then(({data}) => {

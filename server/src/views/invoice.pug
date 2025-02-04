@@ -80,14 +80,14 @@ block content
                     td(align="left")=raw.title
                     td(align="right")=raw.quantity
                     td(align="left")=raw.unit?raw.unit:"час"
-                    td(align="right")=new Intl.NumberFormat('ru-RU').format(raw.price)
-                    td(align="right")=new Intl.NumberFormat('ru-RU').format(raw.price*raw.quantity)
+                    td(align="right")=new Intl.NumberFormat('ru-RU').format(raw.price).replace(',','.')
+                    td(align="right")=new Intl.NumberFormat('ru-RU').format(raw.price*raw.quantity).replace(',','.')
     br
     table(border="0" width="100%" cellpadding="1" cellspacing="1")
         tr
             td
             td(style="width:37mm; font-weight:bold;  text-align:right;") Итого:
-            td(style="width:27mm; font-weight:bold;  text-align:right;")=new Intl.NumberFormat('ru-RU').format(invoice.getTotal())
+            td(style="width:27mm; font-weight:bold;  text-align:right;")=new Intl.NumberFormat('ru-RU').format(invoice.getTotal()).replace(',','.')
         tr
             td
             td(style="width:37mm; font-weight:bold;  text-align:right;") Без налога(НДС) 
@@ -95,17 +95,19 @@ block content
         tr
             td
             td(style="width:37mm; font-weight:bold;  text-align:right;") Всего к оплате
-            td(style="width:27mm; font-weight:bold;  text-align:right;")=new Intl.NumberFormat('ru-RU').format(invoice.getTotal())
+            td(style="width:27mm; font-weight:bold;  text-align:right;")=new Intl.NumberFormat('ru-RU').format(invoice.getTotal()).replace(',','.')
     br
-    div="Всего наименований "+invoice.services.length+" на сумму "+new Intl.NumberFormat('ru-RU').format(invoice.getTotal())+" рублей."
+    div="Всего наименований "+invoice.services.length+" на сумму " + (new Intl.NumberFormat('ru-RU').format(invoice.getTotal())).replace(',','. ') + " рублей."
     div=invoice.getTotalString()
     div(style="background-color:#000000; width:100%; font-size:1px; height:2px;") &nbsp;
     br
     br
-    div="Руководитель ______________________ ("+requisites.director+")"
+    div(style="position:relative;")="Руководитель ______________________ ("+requisites.director+")"
+        if signature != 0
+            img(src="/images/signature.png", style="display:block; width:128px; height:auto;position:absolute; top:-30px; left:110px")
     br
 
-    div="Главный бухгалтер ______________________ ("+(requisites.accountant ? requisites.accountant:requisites.director) +")"
-    //div(style="width: 85mm;text-align:center;") М.П.
-    
+    //div(style="position:relative;")="Главный бухгалтер ______________________ ("+(requisites.accountant ? requisites.accountant:requisites.director) +")"
+        img(src="/images/signature.png", style="display:block; width:128px; height:auto;position:absolute; top:-30px; left:140px")
+
     <br/>            
