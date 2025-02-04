@@ -39,6 +39,18 @@
         </div>
         <div class="columns">
             <div class="column is-one-third">
+                <strong>ОГРН:</strong>
+            </div>
+            <div v-if="!edit" class="column">
+                {{customer.OGRN}}
+            </div>
+            <div v-else class="column">
+                <b-input v-model="customer.OGRN"></b-input>
+                <p v-if="errors && errors.OGRN" class="help is-danger">{{errors.OGRN}}</p>
+            </div>
+        </div>
+        <div class="columns">
+            <div class="column is-one-third">
                 <strong>Индкес:</strong>
             </div>
             <div v-if="!edit" class="column">

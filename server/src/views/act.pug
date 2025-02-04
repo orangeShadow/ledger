@@ -44,20 +44,20 @@ block content
                     td(align="left")=raw.title
                     td(align="right")=raw.quantity
                     td(align="left")=raw.unit?raw.unit:"час"
-                    td(align="right")=new Intl.NumberFormat('ru-RU').format(raw.price)
-                    td(align="right")=new Intl.NumberFormat('ru-RU').format(raw.price*raw.quantity)
+                    td(align="right")=new Intl.NumberFormat('ru-RU').format(raw.price).replace(',','.')
+                    td(align="right")=new Intl.NumberFormat('ru-RU').format(raw.price*raw.quantity).replace(',','.')
     br
     table(border="0" width="100%" cellpadding="1" cellspacing="1")
         tr
             td
             td(style="width:37mm; font-weight:bold;  text-align:right;") Итого:
-            td(style="width:27mm; font-weight:bold;  text-align:right;")=new Intl.NumberFormat('ru-RU').format(invoice.getTotal())
+            td(style="width:27mm; font-weight:bold;  text-align:right;")=new Intl.NumberFormat('ru-RU').format(invoice.getTotal()).replace(',','.')
         tr
             td
             td(style="width:37mm; font-weight:bold;  text-align:right;") Без налога(НДС) 
             td(style="width:27mm; font-weight:bold;  text-align:right;")        
     br
-    div="Всего наименований "+invoice.services.length+" на сумму "+new Intl.NumberFormat('ru-RU').format(invoice.getTotal())+" рублей."
+    div="Всего наименований "+invoice.services.length+" на сумму "+new Intl.NumberFormat('ru-RU').format(invoice.getTotal()).replace(',','. ')+" рублей."
     div=invoice.getTotalString()
     br
     div Все услуги выполнены полностью в срок. Заказчик претензий по объему, качетву и срокам оказанных услуг не имеет
@@ -66,7 +66,11 @@ block content
     br
     table(width="100%")
         tr
-            td Исполнитель ________________________ 
+            td
+                div(style="position:relative") Исполнитель ________________________
+                    if signature
+                        img(src="/images/signature.png", style="display:block; width:128px; height:auto;position:absolute; top:-30px; left:110px")
+
             td(align="right") Заказчик ___________________________ 
     
     //div(style="width: 85mm;text-align:center;") М.П.

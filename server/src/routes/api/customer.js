@@ -31,7 +31,18 @@ router.post('/', (req,res) => {
 router.get('/:id/invoice', function(req, res, next) {
   Invoice.find({'$or':[{'customer._id':new ObjectID(req.params.id)},{'customer._id':req.params.id}]}, function(err, invoices){
     res.send({data:invoices});
-  })
+  }).sort({"number":-1})
+});
+
+router.get('/:id/lastInvoice', function(req, res, next) {
+  Invoice.find(
+    {'$or':[{'customer._id':new ObjectID(req.params.id)},{'customer._id':req.params.id}]},
+    null,
+    {limit:1,sort:{'invoice_date':'desc'}},
+    function(err, invoices){
+      res.send({data:invoices.pop()});
+    }
+  );
 });
 
 router.post('/:id/invoice', (req,res) => {

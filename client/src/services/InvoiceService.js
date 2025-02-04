@@ -10,6 +10,9 @@ export default {
   updateInvoice (invoice) {
     return api().post(`api/invoice/${invoice._id}`, invoice)
   },
+  getLastInvoice (customerId) {
+    return api().get(`api/customer/${customerId}/lastInvoice`)
+  },
   fetchInvoicesByCustomer (customerId) {
     return api().get(`api/customer/${customerId}/invoice`)
   },

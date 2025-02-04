@@ -22,6 +22,7 @@ router.get('/invoice/:id', function(req, res, next) {
     res.render('invoice', {
       invoice,
       requisites,
+      signature: req.query.signature ? req.query.signature:1
     });
   })
 });
@@ -31,6 +32,7 @@ router.get('/act/:id', function(req, res, next) {
     res.render('act', {
       invoice,
       requisites,
+      signature: req.query.signature ? 1:0
     });
   })
 });

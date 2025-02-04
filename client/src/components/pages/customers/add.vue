@@ -39,6 +39,11 @@ export default {
           type: 'text'
         },
         {
+          title: 'ОГРН',
+          name: 'OGRN',
+          type: 'text'
+        },
+        {
           title: 'Индкес',
           name: 'ZIP',
           type: 'text'
