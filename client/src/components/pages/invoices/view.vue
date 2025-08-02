@@ -17,10 +17,32 @@
                 </div>
                 <div class="card-content">
                     <div class="content">
+                        <!-- Поля заявки -->
+                        <b-field label="Номер заявки"
+                                 :type="errors && errors.services && errors.services.requestNumber? 'is-danger':''"
+                                 :message="errors && errors.services && errors.services.requestNumber">
+                            <b-input v-model="service.requestNumber" placeholder="Введите номер заявки"></b-input>
+                        </b-field>
+                        <b-field label="Дата заявки"
+                                 :type="errors && errors.services && errors.services.requestDate? 'is-danger':''"
+                                 :message="errors && errors.services && errors.services.requestDate">
+                            <b-input type="date" v-model="service.requestDate"></b-input>
+                        </b-field>
+
+                        <!-- Выбор услуги из списка клиента -->
+                        <b-field label="Выбрать услугу клиента" v-if="customerServices && customerServices.length > 0">
+                            <b-select v-model="selectedCustomerService" placeholder="Выберите услугу из списка клиента" @input="selectCustomerService">
+                                <option value="">-- Выберите услугу --</option>
+                                <option v-for="(service, index) in customerServices" :key="index" :value="index">
+                                    {{service}}
+                                </option>
+                            </b-select>
+                        </b-field>
+
                         <b-field label="Название"
                                  :type="errors && errors.services && errors.services.title? 'is-danger':''"
                                  :message="errors && errors.services && errors.services.title">
-                            <b-input v-model="service.title"></b-input>
+                            <b-input type="textarea" v-model="service.title" placeholder="Введите или выберите название услуги"></b-input>
                         </b-field>
                         <b-field label="Количество"
                                  :type="errors && errors.services && errors.services.quantity? 'is-danger':''"
@@ -41,7 +63,7 @@
                 </div>
                 <footer class="card-footer">
                     <a class="card-footer-item" @click="addToInvoice">Добавить</a>
-                    <a class="card-footer-item">Очистить</a>
+                    <a class="card-footer-item" @click="clearService">Очистить</a>
                 </footer>
             </b-collapse>
             <b-field>
@@ -81,6 +103,7 @@
 
 <script>
 import InvoiceService from '@/services/InvoiceService'
+import CustomerService from '@/services/CustomerService'
 import moment from 'moment'
 
 export default {
@@ -101,7 +124,17 @@ export default {
       ],
       invoice: null,
       addServiceShow: false,
-      service: {},
+      service: {
+        title: '',
+        quantity: '',
+        unit: '',
+        price: '',
+        requestNumber: '',
+        requestDate: ''
+      },
+      selectedCustomerService: '',
+      customerServices: [],
+      originalCustomerServices: [],
       errors: {}
     }
   },
@@ -112,10 +145,96 @@ export default {
       if (this.invoice.invoice_date) {
         this.invoice.invoice_date = moment(this.invoice.invoice_date).format('YYYY-MM-DD')
       }
+      // Загружаем услуги клиента после получения счета
+      await this.loadCustomerServices()
+    },
+    async loadCustomerServices () {
+      try {
+        const response = await CustomerService.fetchCustomer(this.invoice.customer._id)
+        this.originalCustomerServices = response.data.customer.services_description || []
+        this.customerServices = [...this.originalCustomerServices]
+        console.log('Загружены услуги клиента:', this.customerServices)
+      } catch (error) {
+        console.error('Ошибка загрузки услуг клиента:', error)
+      }
+    },
+    getReplacedServiceText (originalText) {
+      let replacedText = originalText
+
+      if (this.invoice.invoice_date) {
+        const date = new Date(this.invoice.invoice_date)
+        const year = date.getFullYear()
+        const month = date.getMonth()
+
+        // Первое число выбранного месяца
+        const startDate = new Date(year, month, 1)
+        const startMonth = this.formatDate(startDate)
+
+        // Последний день выбранного месяца
+        const endDate = new Date(year, month + 1, 0)
+        const endMonth = this.formatDate(endDate)
+
+        // Заменяем плейсхолдеры дат
+        replacedText = replacedText.replace('{startMonth}', startMonth).replace('{endMonth}', endMonth)
+      }
+
+      // Заменяем плейсхолдеры заявки
+      if (this.service.requestNumber) {
+        replacedText = replacedText.replace('{N}', this.service.requestNumber)
+      }
+
+      if (this.service.requestDate) {
+        const requestDate = new Date(this.service.requestDate)
+        const formattedRequestDate = this.formatDate(requestDate)
+        replacedText = replacedText.replace('{date}', formattedRequestDate)
+      }
+
+      return replacedText
+    },
+    formatDate (date) {
+      const day = String(date.getDate()).padStart(2, '0')
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const year = date.getFullYear()
+      return `${day}.${month}.${year}`
+    },
+    selectCustomerService () {
+      console.log('selectCustomerService вызван с значением:', this.selectedCustomerService)
+      if (this.selectedCustomerService !== '' && this.selectedCustomerService !== null) {
+        // Получаем оригинальный текст услуги
+        const originalService = this.originalCustomerServices[this.selectedCustomerService]
+        console.log('Оригинальная услуга:', originalService)
+        // Заменяем плейсхолдеры и помещаем в поле "Название"
+        const replacedService = this.getReplacedServiceText(originalService)
+        this.service.title = replacedService
+        console.log('Установлено service.title с заменой плейсхолдеров:', this.service.title)
+        // Фокусируемся на поле названия для удобства редактирования
+        this.$nextTick(() => {
+          const titleTextarea = this.$el.querySelector('textarea[v-model="service.title"]')
+          if (titleTextarea) {
+            titleTextarea.focus()
+            titleTextarea.select()
+          }
+        })
+        // Очищаем выбор для возможности повторного выбора
+        this.$nextTick(() => {
+          this.selectedCustomerService = ''
+        })
+      }
+    },
+    clearService () {
+      this.service = {
+        title: '',
+        quantity: '',
+        unit: '',
+        price: '',
+        requestNumber: '',
+        requestDate: ''
+      }
+      this.selectedCustomerService = ''
     },
     async save () {
       await InvoiceService.updateInvoice(this.invoice).then(({data}) => {
-        this.$route.path(`customer/${data.customer._id}/invoices`)
+        this.$router.push({path: `/customer/${data.customer._id}/invoices`})
       }).catch((e) => {
         if (e.response && e.response.data) {
           this.errors = e.response.data.errors
@@ -125,7 +244,7 @@ export default {
     },
     addToInvoice () {
       this.invoice.services.push(this.service)
-      this.service = {}
+      this.clearService()
       this.addServiceShow = false
     }
   },

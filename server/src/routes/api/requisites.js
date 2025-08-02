@@ -17,7 +17,7 @@ router.post('/', function (req, res, next) {
     requisites.refresh();
     res.send({success:true})
   } catch (e) {
-    res.send({success:false, message: e.getMessage()}).status(500);
+    res.status(500).send({success:false, message: e.message || e.toString()});
   }
 })
 

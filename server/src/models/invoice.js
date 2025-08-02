@@ -99,6 +99,10 @@ InvoiceSchema.methods.getCustomerLine = function(cb) {
   return line.join(', ');
 };
 
-var Invoice = mongoose.model('Invoice', InvoiceSchema);
+InvoiceSchema.methods.getCustomerServicesDescription = function(cb) {
+  return this.customer.services_description || [];
+};
+
+var Invoice = mongoose.model('Invoice', InvoiceSchema, 'invoices');
 
 module.exports = { Invoice };

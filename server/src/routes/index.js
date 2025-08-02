@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const lodash = require('lodash');
-const {ObjectID} = require('mongodb');
+const {ObjectId} = require('mongodb');
 const {mongoose} = require('../db/mongoose.js');
 const {Invoice}  = require('../models/invoice');
 const requisites = require('../models/requisites');
@@ -17,24 +17,44 @@ function capitalizeFirstLetter(string) {
 
 moment.locale('ru-RU');
 
-router.get('/invoice/:id', function(req, res, next) {
-  Invoice.findOne({'_id':new ObjectID(req.params.id)}, function(err, invoice){
+router.get('/', function(req, res, next) {
+  res.render('index');
+});
+
+router.get('/customer', function(req, res, next) {
+  res.render('index');
+});
+
+router.get('/invoice/:id', async function(req, res, next) {
+  try {
+    const invoice = await Invoice.findOne({'_id':new ObjectId(req.params.id)})
+    if (!invoice) {
+      return res.status(404).send('Invoice not found');
+    }
     res.render('invoice', {
       invoice,
       requisites,
       signature: req.query.signature ? req.query.signature:1
     });
-  })
+  } catch (err) {
+    res.status(500).send('Error loading invoice');
+  }
 });
 
-router.get('/act/:id', function(req, res, next) {
-  Invoice.findOne({'_id':new ObjectID(req.params.id)}, function(err, invoice){
+router.get('/act/:id', async function(req, res, next) {
+  try {
+    const invoice = await Invoice.findOne({'_id':new ObjectId(req.params.id)})
+    if (!invoice) {
+      return res.status(404).send('Invoice not found');
+    }
     res.render('act', {
       invoice,
       requisites,
       signature: req.query.signature ? 1:0
     });
-  })
+  } catch (err) {
+    res.status(500).send('Error loading act');
+  }
 });
 
 

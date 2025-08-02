@@ -109,6 +109,51 @@
                 <p v-if="errors && errors.reason" class="help is-danger">{{errors.reason}}</p>
             </div>
         </div>
+
+        <!-- Секция услуг -->
+        <div class="columns">
+            <div class="column is-one-third">
+                <strong>Услуги:</strong>
+            </div>
+            <div v-if="!edit" class="column">
+                <div v-if="customer.services_description && customer.services_description.length > 0">
+                    <ul class="services-list">
+                        <li v-for="(service, index) in customer.services_description" :key="index" class="service-item">
+                            {{service}}
+                        </li>
+                    </ul>
+                </div>
+                <div v-else class="has-text-grey-light">
+                    Услуги не указаны
+                </div>
+            </div>
+            <div v-else class="column">
+                <div class="services-container">
+                    <div v-for="(service, index) in customer.services_description" :key="index" class="field has-addons">
+                        <div class="control is-expanded">
+                            <b-input v-model="customer.services_description[index]" placeholder="Введите описание услуги"></b-input>
+                        </div>
+                        <div class="control">
+                            <button @click="removeService(index)" class="button is-danger">
+                                <span class="icon">
+                                    <i class="fas fa-trash"></i>
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="control">
+                            <button @click="addService" class="button is-info">
+                                <span class="icon">
+                                    <i class="fas fa-plus"></i>
+                                </span>
+                                <span>Добавить услугу</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="columns">
             <div v-if="!edit"  class="column is-half-desktop">
                 <button @click="edit=!edit" class="button is-warning">Редактировать</button>
@@ -127,6 +172,33 @@
 <style scoped>
     .invoice-button {
         margin-right: 10px;
+    }
+
+    .services-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .service-item {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .service-item:last-child {
+        border-bottom: none;
+    }
+
+    .services-container {
+        margin-bottom: 1rem;
+    }
+
+    .services-container .field {
+        margin-bottom: 0.5rem;
+    }
+
+    .services-container .field:last-child {
+        margin-bottom: 0;
     }
 </style>
 
@@ -147,9 +219,25 @@ export default {
       const response = await CustomerService.fetchCustomer(this.$route.params.id)
       this.customer = response.data.customer
     },
+    addService () {
+      if (!this.customer.services_description) {
+        this.customer.services_description = []
+      }
+      this.customer.services_description.push('')
+    },
+    removeService (index) {
+      this.customer.services_description.splice(index, 1)
+    },
     async save () {
       this.errors = {}
-      await CustomerService.updateCustomer(this.$route.params.id, this.customer).then(({data}) => {
+      // Фильтруем пустые услуги перед сохранением
+      const customerToSave = {
+        ...this.customer,
+        services_description: this.customer.services_description
+          ? this.customer.services_description.filter(service => service.trim() !== '') : []
+      }
+
+      await CustomerService.updateCustomer(this.$route.params.id, customerToSave).then(({data}) => {
         this.customer = data.customer
         this.edit = false
       }).catch((e) => {
