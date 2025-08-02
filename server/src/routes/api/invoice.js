@@ -2,14 +2,17 @@ const express = require('express')
 const router = express.Router()
 
 const lodash = require('lodash')
-const {ObjectID} = require('mongodb')
+const {ObjectId} = require('mongodb')
 const {mongoose} = require('../../db/mongoose.js')
 const {Invoice} = require('../../models/invoice')
 
-router.get('/', function (req, res, next) {
-  Invoice.find({}, function (err, invoices) {
+router.get('/', async function (req, res, next) {
+  try {
+    const invoices = await Invoice.find({})
     res.send({data: invoices})
-  })
+  } catch (err) {
+    res.status(500).send({error: err.message})
+  }
 })
 
 router.post('/add', (req, res) => {
@@ -22,34 +25,44 @@ router.post('/add', (req, res) => {
   })
 })
 
-router.get('/:id', function (req, res, next) {
-  Invoice.findOne({'_id': new ObjectID(req.params.id)}, function (err, invoice) {
-    if (err) res.send({error: err})
-
+router.get('/:id', async function (req, res, next) {
+  try {
+    const invoice = await Invoice.findOne({'_id': new ObjectId(req.params.id)})
+    if (!invoice) {
+      return res.status(404).send({error: 'Invoice not found'})
+    }
     return res.send(invoice)
-  })
+  } catch (err) {
+    return res.status(500).send({error: err.message})
+  }
 })
 
-router.post('/:id', function (req, res, next) {
-  Invoice.findOne({'_id': new ObjectID(req.params.id)}, function (err, invoice) {
-    if (err) res.send({error: err})
+router.post('/:id', async function (req, res, next) {
+  try {
+    const invoice = await Invoice.findOne({'_id': new ObjectId(req.params.id)})
+    if (!invoice) {
+      return res.status(404).send({error: 'Invoice not found'})
+    }
 
     invoice.set(req.body)
 
-    invoice.save().then((doc) => {
-      return res.send(doc);
-    }, (e) => {
-      return res.send(errorHandler.handler(e), 422).status(422)
-    })
-
-    return res.send({invoice})
-  })
+    const doc = await invoice.save()
+    return res.send(doc)
+  } catch (e) {
+    return res.status(422).send({error: e.message || e.toString()})
+  }
 })
 
-router.delete('/:id', function (req, res, next) {
-  Invoice.findByIdAndDelete({'_id':new ObjectID(req.params.id)}, function(err, invoice) {
+router.delete('/:id', async function (req, res, next) {
+  try {
+    const invoice = await Invoice.findByIdAndDelete(new ObjectId(req.params.id))
+    if (!invoice) {
+      return res.status(404).send({error: 'Invoice not found'})
+    }
     return res.send(invoice)
-  });
+  } catch (err) {
+    return res.status(500).send({error: err.message})
+  }
 });
 
 module.exports = router

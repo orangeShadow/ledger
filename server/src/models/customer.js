@@ -51,6 +51,28 @@ var CustomerSchema = new Schema({
     type: String,
     trim:true
   },
+  services_description: {
+    type: [{
+      name: {
+        type: String,
+        required: true,
+        trim: true
+      },
+      description: {
+        type: String,
+        required: true,
+        trim: true
+      },
+      postDescription: {
+        type: String,
+        required: false,
+        trim: true,
+        default: ''
+      }
+    }],
+    required: false,
+    default: []
+  },
   createdAt: {
     type: Number,
     default: new Date().getTime()
@@ -65,6 +87,22 @@ CustomerSchema.methods.getCustomerLine = function(cb){
   return [this.title, 'ИНН '+this.INN, 'КПП'+ this.KPP, this.ZIP, this.area, this.city, this.address].filter().join(', ');
 };
 
-var Customer = mongoose.model('Customer', CustomerSchema);
+CustomerSchema.methods.getServicesDescription = function(cb){  
+  return this.services_description || [];
+};
+
+CustomerSchema.methods.getServiceNames = function(cb){  
+  if (!this.services_description) return [];
+  
+  // Обработка старого формата (массив строк)
+  if (this.services_description.length > 0 && typeof this.services_description[0] === 'string') {
+    return this.services_description;
+  }
+  
+  // Новый формат (массив объектов)
+  return this.services_description.map(service => service.name);
+};
+
+var Customer = mongoose.model('Customer', CustomerSchema, 'customers');
 
 module.exports = { Customer };
