@@ -63,4 +63,7 @@ typings/
 requisites.json
 
 server/src/docx
+
+# Signature files
 client/build/signature.png
+client/build/signature.pxm
