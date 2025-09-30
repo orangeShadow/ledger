@@ -57,10 +57,13 @@ typings/
 # dotenv environment variables file
 .env
 
+# Configuration files with sensitive data
+requisites.json
+server/src/config/requisites.json
+
 # next.js build output
 .next
 .idea
-requisites.json
 
 # Generated files and logs
 server/src/docx/
