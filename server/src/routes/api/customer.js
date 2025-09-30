@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const lodash = require('lodash');
-const {ObjectID} = require('mongodb');
+const {ObjectId} = require('mongodb');
 const {mongoose} = require('../../db/mongoose.js');
 const {Customer}  =  require('../../models/customer');
 const {Invoice}  =  require('../../models/invoice');
@@ -12,10 +12,32 @@ const MongooseErrorHandler = require('../../helpers/MongooseErrorHandler');
 
 const errorHandler = new MongooseErrorHandler;
 
-router.get('/', function(req, res, next) {
-    Customer.find({}, function(err, customers){
+router.get('/', async function(req, res, next) {
+    try {
+        const customers = await Customer.find({})
+        
+        // Обработка старых данных для всех клиентов
+        for (let customer of customers) {
+            if (customer.services_description && customer.services_description.length > 0) {
+                // Проверяем, является ли первый элемент строкой (старый формат)
+                if (typeof customer.services_description[0] === 'string') {
+                    // Конвертируем старые данные в новый формат
+                    customer.services_description = customer.services_description.map(service => ({
+                        name: service,
+                        description: service,
+                        postDescription: '',
+                        jira_link: '',
+                        git_link: ''
+                    }));
+                    await customer.save();
+                }
+            }
+        }
+        
         res.send({data:customers});
-    })
+    } catch (err) {
+        return res.status(422).send(errorHandler.handler(err));
+    }
 });
 
 router.post('/', (req,res) => {
@@ -28,58 +50,88 @@ router.post('/', (req,res) => {
     });
 });
 
-router.get('/:id/invoice', function(req, res, next) {
-  Invoice.find({'$or':[{'customer._id':new ObjectID(req.params.id)},{'customer._id':req.params.id}]}, function(err, invoices){
+router.get('/:id/invoice', async function(req, res, next) {
+  try {
+    const invoices = await Invoice.find({'$or':[{'customer._id':new ObjectId(req.params.id)},{'customer._id':req.params.id}]}).sort({"number":-1})
     res.send({data:invoices});
-  }).sort({"number":-1})
+  } catch (err) {
+    res.status(500).send({error: err.message});
+  }
 });
 
-router.get('/:id/lastInvoice', function(req, res, next) {
-  Invoice.find(
-    {'$or':[{'customer._id':new ObjectID(req.params.id)},{'customer._id':req.params.id}]},
-    null,
-    {limit:1,sort:{'invoice_date':'desc'}},
-    function(err, invoices){
-      res.send({data:invoices.pop()});
+router.get('/:id/lastInvoice', async function(req, res, next) {
+  try {
+    const invoices = await Invoice.find(
+      {'$or':[{'customer._id':new ObjectId(req.params.id)},{'customer._id':req.params.id}]},
+      null,
+      {limit:1,sort:{'invoice_date':'desc'}}
+    );
+    res.send({data:invoices.pop()});
+  } catch (err) {
+    res.status(500).send({error: err.message});
+  }
+});
+
+router.post('/:id/invoice', async (req,res) => {
+  try {
+    const customer = await Customer.findOne({"_id": new ObjectId(req.params.id)})
+    if (!customer) {
+      return res.status(404).send({error: 'Customer not found'});
     }
-  );
-});
-
-router.post('/:id/invoice', (req,res) => {
-  Customer.findOne({"_id": new ObjectID(req.params.id)}, function(err, customer) {
-    if (err) res.send('error', {error: err});
 
     let invoice = new Invoice(req.body);
     invoice.customer = customer;
     let error = invoice.validateSync();
-    invoice.save().then( (doc) =>{
-      return res.send(doc);
-    }, (e) => {
-      return res.send(errorHandler.handler(e), 422).status(422);
-    });
-  });
+    const doc = await invoice.save();
+    return res.send(doc);
+  } catch (e) {
+    return res.status(422).send(errorHandler.handler(e));
+  }
 });
 
-router.get('/:id', function(req, res, next) {
-    Customer.findOne({"_id": new ObjectID(req.params.id)}, function(err, customer){
-        if(err) res.send({error:err});
-
+router.get('/:id', async function(req, res, next) {
+    try {
+        const customer = await Customer.findOne({"_id": new ObjectId(req.params.id)})
+        if (!customer) {
+            return res.status(404).send({error: 'Customer not found'});
+        }
+        
+        // Обработка старых данных services_description
+        if (customer.services_description && customer.services_description.length > 0) {
+            // Проверяем, является ли первый элемент строкой (старый формат)
+            if (typeof customer.services_description[0] === 'string') {
+                // Конвертируем старые данные в новый формат
+                customer.services_description = customer.services_description.map(service => ({
+                    name: service,
+                    description: service,
+                    postDescription: '',
+                    jira_link: '',
+                    git_link: ''
+                }));
+                await customer.save();
+            }
+        }
+        
         return res.send({customer});
-    });
+    } catch (err) {
+        return res.status(500).send({error: err.message});
+    }
 });
 
-router.post('/:id', function(req, res, next) {
-  Customer.findOne({"_id": new ObjectID(req.params.id)}, function(err, customer){
-    if(err) res.send('error',{error:err});
+router.post('/:id', async function(req, res, next) {
+  try {
+    const customer = await Customer.findOne({"_id": new ObjectId(req.params.id)})
+    if (!customer) {
+      return res.status(404).send({error: 'Customer not found'});
+    }
 
     customer.set(req.body);
 
-    customer.save().then( (doc) =>{
-      return res.send({customer:doc});
-    }, (e) => {
-      return res.send(errorHandler.handler(e), 422).status(422);
-    });
-  });
+    const doc = await customer.save();
+    return res.send({customer:doc});
+  } catch (e) {
+    return res.status(422).send(errorHandler.handler(e));
+  }
 });
 
 

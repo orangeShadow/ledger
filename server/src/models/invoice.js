@@ -22,6 +22,41 @@ var ServicesSchema = new Schema({
   price: {
     type: Number,
     required: true
+  },
+  requestNumber: {
+    type: String,
+    required: false,
+    default: ''
+  },
+  requestDate: {
+    type: String,
+    required: false,
+    default: ''
+  },
+  hour: {
+    type: Number,
+    required: false,
+    default: 0
+  },
+  description: {
+    type: String,
+    required: false,
+    default: ''
+  },
+  projectName: {
+    type: String,
+    required: false,
+    default: ''
+  },
+  projectJiraLink: {
+    type: String,
+    required: false,
+    default: ''
+  },
+  projectGitLink: {
+    type: String,
+    required: false,
+    default: ''
   }
 });
 
@@ -99,6 +134,10 @@ InvoiceSchema.methods.getCustomerLine = function(cb) {
   return line.join(', ');
 };
 
-var Invoice = mongoose.model('Invoice', InvoiceSchema);
+InvoiceSchema.methods.getCustomerServicesDescription = function(cb) {
+  return this.customer.services_description || [];
+};
+
+var Invoice = mongoose.model('Invoice', InvoiceSchema, 'invoices');
 
 module.exports = { Invoice };
