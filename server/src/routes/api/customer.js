@@ -25,7 +25,9 @@ router.get('/', async function(req, res, next) {
                     customer.services_description = customer.services_description.map(service => ({
                         name: service,
                         description: service,
-                        postDescription: ''
+                        postDescription: '',
+                        jira_link: '',
+                        git_link: ''
                     }));
                     await customer.save();
                 }
@@ -102,7 +104,9 @@ router.get('/:id', async function(req, res, next) {
                 customer.services_description = customer.services_description.map(service => ({
                     name: service,
                     description: service,
-                    postDescription: ''
+                    postDescription: '',
+                    jira_link: '',
+                    git_link: ''
                 }));
                 await customer.save();
             }

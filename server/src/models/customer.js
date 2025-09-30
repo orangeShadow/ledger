@@ -68,6 +68,18 @@ var CustomerSchema = new Schema({
         required: false,
         trim: true,
         default: ''
+      },
+      jira_link: {
+        type: String,
+        required: false,
+        trim: true,
+        default: ''
+      },
+      git_link: {
+        type: String,
+        required: false,
+        trim: true,
+        default: ''
       }
     }],
     required: false,

@@ -61,3 +61,6 @@ typings/
 .next
 .idea
 requisites.json
+
+server/src/docx
+client/build/signature.png

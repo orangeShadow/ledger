@@ -34,7 +34,7 @@
                             <b-select v-model="selectedCustomerService" placeholder="Выберите услугу из списка клиента" @input="selectCustomerService">
                                 <option value="">-- Выберите услугу --</option>
                                 <option v-for="(service, index) in customerServices" :key="index" :value="index">
-                                    {{service}}
+                                    {{service.name}}
                                 </option>
                             </b-select>
                         </b-field>
@@ -74,7 +74,7 @@
                             <th>Кол-во</th>
                             <th>Ед. измерения</th>
                             <th>Сумма</th>
-                            <th></th>
+                            <th>Действия</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -83,10 +83,14 @@
                             <td>{{service.quantity}}</td>
                             <td>{{service.unit}}</td>
                             <td>{{service.price}}</td>
-                            <td><button @click="(event)=>{invoice.services.splice(key,1)}" class="button is-small is-danger"><b-icon
-                                    icon="delete"
-                                    size="is-small">
-                            </b-icon></button></td>
+                            <td>
+                                <button @click="editService(key)" class="button is-small is-info mr-2">
+                                    <b-icon icon="edit" size="is-small"></b-icon>
+                                </button>
+                                <button @click="removeService(key)" class="button is-small is-danger">
+                                    <b-icon icon="delete" size="is-small"></b-icon>
+                                </button>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
@@ -94,8 +98,82 @@
         </div>
         <div class="columns mt-3">
             <div class="column is-half-desktop">
-                <button @click="save()" class="button is-success">Сохранить</button>
+                <button @click="save()" class="button is-success" :disabled="isSaving">
+                  <span v-if="isSaving">Сохранение...</span>
+                  <span v-else>Сохранить</span>
+                </button>
                 <router-link to="/customer" class="button is-pulled-right">Назад к списку</router-link>
+            </div>
+        </div>
+
+        <!-- Модальное окно для редактирования услуги -->
+        <div v-if="editServiceShow" class="modal is-active">
+            <div class="modal-background" @click="editServiceShow = false"></div>
+            <div class="modal-card">
+                <header class="modal-card-head">
+                    <p class="modal-card-title">Редактировать услугу</p>
+                    <button class="delete" aria-label="close" @click="editServiceShow = false"></button>
+                </header>
+                <section class="modal-card-body">
+                    <b-field label="Название услуги">
+                        <b-input v-model="editingService.title" type="textarea" placeholder="Название услуги"></b-input>
+                    </b-field>
+                    <div class="columns">
+                        <div class="column">
+                            <b-field label="Количество">
+                                <b-input v-model.number="editingService.quantity" placeholder="Количество"></b-input>
+                            </b-field>
+                        </div>
+                        <div class="column">
+                            <b-field label="Единица измерения">
+                                <b-input v-model="editingService.unit" placeholder="шт"></b-input>
+                            </b-field>
+                        </div>
+                    </div>
+                    <div class="columns">
+                        <div class="column">
+                            <b-field label="Цена">
+                                <b-input v-model.number="editingService.price" placeholder="Цена"></b-input>
+                            </b-field>
+                        </div>
+                        <div class="column">
+                            <b-field label="Номер заявки">
+                                <b-input v-model="editingService.requestNumber" placeholder="Номер заявки"></b-input>
+                            </b-field>
+                        </div>
+                    </div>
+                    <div class="columns">
+                        <div class="column">
+                            <b-field label="Дата заявки">
+                                <b-input v-model="editingService.requestDate" type="date" placeholder="Дата заявки"></b-input>
+                            </b-field>
+                        </div>
+                        <div class="column">
+                            <b-field label="Название проекта">
+                                <b-input v-model="editingService.projectName" placeholder="Название проекта"></b-input>
+                            </b-field>
+                        </div>
+                    </div>
+                    <div class="columns">
+                        <div class="column">
+                            <b-field label="Ссылка на Jira">
+                                <b-input v-model="editingService.projectJiraLink" placeholder="Ссылка на Jira"></b-input>
+                            </b-field>
+                        </div>
+                        <div class="column">
+                            <b-field label="Ссылка на Git">
+                                <b-input v-model="editingService.projectGitLink" placeholder="Ссылка на Git"></b-input>
+                            </b-field>
+                        </div>
+                    </div>
+                    <b-field label="Описание">
+                        <b-input v-model="editingService.description" type="textarea" placeholder="Описание услуги"></b-input>
+                    </b-field>
+                </section>
+                <footer class="modal-card-foot">
+                    <button class="button is-success" @click="saveEditedService">Сохранить</button>
+                    <button class="button" @click="editServiceShow = false">Отмена</button>
+                </footer>
             </div>
         </div>
     </section>
@@ -107,8 +185,12 @@ import CustomerService from '@/services/CustomerService'
 
 export default {
   name: 'InvoiceAdd',
+  components: {
+    BModal: () => import('buefy/src/components/modal/Modal')
+  },
   data () {
     return {
+      isSaving: false,
       lastInvoice: null,
       invoiceInputFields: [
         {
@@ -134,12 +216,30 @@ export default {
         unit: '',
         price: '',
         requestNumber: '',
-        requestDate: ''
+        requestDate: '',
+        description: '',
+        projectName: '',
+        projectJiraLink: '',
+        projectGitLink: ''
       },
       selectedCustomerService: '',
       customerServices: [],
       originalCustomerServices: [],
-      errors: {}
+      errors: {},
+      editServiceShow: false,
+      editingServiceIndex: -1,
+      editingService: {
+        title: '',
+        quantity: '',
+        unit: '',
+        price: '',
+        requestNumber: '',
+        requestDate: '',
+        description: '',
+        projectName: '',
+        projectJiraLink: '',
+        projectGitLink: ''
+      }
     }
   },
   mounted () {
@@ -223,13 +323,36 @@ export default {
     selectCustomerService () {
       console.log('selectCustomerService вызван с значением:', this.selectedCustomerService)
       if (this.selectedCustomerService !== '' && this.selectedCustomerService !== null) {
-        // Получаем оригинальный текст услуги
+        // Получаем оригинальный объект услуги
         const originalService = this.originalCustomerServices[this.selectedCustomerService]
         console.log('Оригинальная услуга:', originalService)
-        // Заменяем плейсхолдеры и помещаем в поле "Название"
-        const replacedService = this.getReplacedServiceText(originalService)
-        this.service.title = replacedService
+
+        // Заменяем плейсхолдеры в описании услуги
+        const replacedDescription = this.getReplacedServiceText(originalService.description)
+
+        // Заменяем плейсхолдеры в пост-описании услуги
+        const replacedPostDescription = originalService.postDescription
+          ? this.getReplacedServiceText(originalService.postDescription) : ''
+
+        // Объединяем описание и пост-описание
+        const fullTitle = replacedDescription + (replacedPostDescription ? '\n\n' + replacedPostDescription : '')
+        this.service.title = fullTitle
+
+        // Сохраняем данные проекта из выбранной услуги клиента
+        this.service.projectName = originalService.name || ''
+        this.service.projectJiraLink = originalService.jira_link || ''
+        this.service.projectGitLink = originalService.git_link || ''
+
+        // Сохраняем оригинальное описание для использования в шаблоне
+        this.service.description = originalService.description || ''
+
         console.log('Установлено service.title с заменой плейсхолдеров:', this.service.title)
+        console.log('Данные проекта:', {
+          projectName: this.service.projectName,
+          projectJiraLink: this.service.projectJiraLink,
+          projectGitLink: this.service.projectGitLink
+        })
+
         // Фокусируемся на поле названия для удобства редактирования
         this.$nextTick(() => {
           const titleTextarea = this.$el.querySelector('textarea[v-model="service.title"]')
@@ -251,26 +374,72 @@ export default {
         unit: '',
         price: '',
         requestNumber: '',
-        requestDate: ''
+        requestDate: '',
+        description: '',
+        projectName: '',
+        projectJiraLink: '',
+        projectGitLink: ''
       }
       this.selectedCustomerService = ''
     },
     async save () {
+      // Защита от двойного нажатия
+      if (this.isSaving) {
+        return
+      }
+
+      this.isSaving = true
       let self = this
-      await InvoiceService.addInvoiceByCustomerId(this.$route.params.id, this.invoice).then(({data}) => {
+
+      try {
+        const {data} = await InvoiceService.addInvoiceByCustomerId(this.$route.params.id, this.invoice)
         self.invoice = data
         self.$router.push({path: `/customer/${data.customer._id}/invoices`})
-      }).catch((e) => {
+      } catch (e) {
         if (e.response && e.response.data) {
           this.errors = e.response.data.errors
         }
         console.log(e)
-      })
+      } finally {
+        this.isSaving = false
+      }
     },
     addToInvocie () {
-      this.invoice.services.push(this.service)
+      // Создаем объект service с полными данными
+      const serviceToAdd = {
+        title: this.service.title,
+        quantity: this.service.quantity,
+        unit: this.service.unit,
+        price: this.service.price,
+        requestNumber: this.service.requestNumber,
+        requestDate: this.service.requestDate,
+        description: this.service.description,
+        projectName: this.service.projectName,
+        projectJiraLink: this.service.projectJiraLink,
+        projectGitLink: this.service.projectGitLink
+      }
+
+      this.invoice.services.push(serviceToAdd)
       this.clearService()
       this.addServiceShow = false
+    },
+    removeService (index) {
+      this.invoice.services.splice(index, 1)
+    },
+    editService (index) {
+      console.log('editService вызван с индексом:', index)
+      console.log('Услуга для редактирования:', this.invoice.services[index])
+      this.editingServiceIndex = index
+      this.editingService = { ...this.invoice.services[index] }
+      this.editServiceShow = true
+      console.log('Модальное окно открыто:', this.editServiceShow)
+    },
+    saveEditedService () {
+      if (this.editingServiceIndex >= 0) {
+        this.invoice.services[this.editingServiceIndex] = { ...this.editingService }
+        this.editServiceShow = false
+        this.editingServiceIndex = -1
+      }
     }
   },
   beforeRouteLeave (to, from, next) {

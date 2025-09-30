@@ -21,5 +21,10 @@ export default {
   },
   deleteInvoice (invoiceId) {
     return api().delete(`api/invoice/${invoiceId}`)
+  },
+  downloadActFile (invoiceId) {
+    return api().get(`api/invoice/${invoiceId}/act-file`, {
+      responseType: 'blob'
+    })
   }
 }
