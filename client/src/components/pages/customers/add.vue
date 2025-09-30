@@ -25,6 +25,14 @@
                         <b-input type="textarea" v-model="service.postDescription" placeholder="Введите дополнительную информацию"></b-input>
                     </div>
                     <div class="field">
+                        <label class="label is-small">Ссылка на Jira</label>
+                        <b-input v-model="service.jira_link" placeholder="https://jira.company.com/browse/PROJECT-123"></b-input>
+                    </div>
+                    <div class="field">
+                        <label class="label is-small">Ссылка на Git</label>
+                        <b-input v-model="service.git_link" placeholder="https://github.com/company/repo/pull/123"></b-input>
+                    </div>
+                    <div class="field">
                         <div class="control">
                             <button @click="removeService(index)" class="button is-danger is-small">
                                 <span class="icon">
@@ -122,21 +130,23 @@ export default {
       this.customer.services_description.push({
         name: '',
         description: '',
-        postDescription: ''
+        postDescription: '',
+        jira_link: '',
+        git_link: ''
       })
     },
     removeService (index) {
       this.customer.services_description.splice(index, 1)
     },
-        async save () {
+    async save () {
       // Фильтруем пустые услуги перед сохранением
       const customerToSave = {
         ...this.customer,
-        services_description: this.customer.services_description.filter(service => 
+        services_description: this.customer.services_description.filter(service =>
           service.name.trim() !== '' && service.description.trim() !== ''
         )
       }
-      
+
       await CustomerService.addCustomer(customerToSave).then(({customer}) => {
         this.$router.push(`/customer/${customer.id}`)
       }).catch((e) => {

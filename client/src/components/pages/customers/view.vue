@@ -117,11 +117,23 @@
             </div>
             <div v-if="!edit" class="column">
                 <div v-if="customer.services_description && customer.services_description.length > 0">
-                    <ul class="services-list">
-                        <li v-for="(service, index) in customer.services_description" :key="index" class="service-item">
-                            {{service}}
-                        </li>
-                    </ul>
+                    <div v-for="(service, index) in customer.services_description" :key="index" class="service-card">
+                        <div class="service-header">
+                            <strong>{{service.name}}</strong>
+                        </div>
+                        <div class="service-description">
+                            <p><strong>Описание:</strong> {{service.description}}</p>
+                            <p v-if="service.postDescription"><strong>Дополнительно:</strong> {{service.postDescription}}</p>
+                            <p v-if="service.jira_link">
+                                <strong>Jira:</strong>
+                                <a :href="service.jira_link" target="_blank" class="has-text-link">{{service.jira_link}}</a>
+                            </p>
+                            <p v-if="service.git_link">
+                                <strong>Git:</strong>
+                                <a :href="service.git_link" target="_blank" class="has-text-link">{{service.git_link}}</a>
+                            </p>
+                        </div>
+                    </div>
                 </div>
                 <div v-else class="has-text-grey-light">
                     Услуги не указаны
@@ -129,16 +141,36 @@
             </div>
             <div v-else class="column">
                 <div class="services-container">
-                    <div v-for="(service, index) in customer.services_description" :key="index" class="field has-addons">
-                        <div class="control is-expanded">
-                            <b-input v-model="customer.services_description[index]" placeholder="Введите описание услуги"></b-input>
+                    <div v-for="(service, index) in customer.services_description" :key="index" class="service-item">
+                        <div class="field">
+                            <label class="label is-small">Название услуги</label>
+                            <b-input v-model="service.name" placeholder="Введите название услуги"></b-input>
                         </div>
-                        <div class="control">
-                            <button @click="removeService(index)" class="button is-danger">
-                                <span class="icon">
-                                    <i class="fas fa-trash"></i>
-                                </span>
-                            </button>
+                        <div class="field">
+                            <label class="label is-small">Описание</label>
+                            <b-input type="textarea" v-model="service.description" placeholder="Введите описание услуги"></b-input>
+                        </div>
+                        <div class="field">
+                            <label class="label is-small">Пост-описание (дополнительная информация)</label>
+                            <b-input type="textarea" v-model="service.postDescription" placeholder="Введите дополнительную информацию"></b-input>
+                        </div>
+                        <div class="field">
+                            <label class="label is-small">Ссылка на Jira</label>
+                            <b-input v-model="service.jira_link" placeholder="https://jira.company.com/browse/PROJECT-123"></b-input>
+                        </div>
+                        <div class="field">
+                            <label class="label is-small">Ссылка на Git</label>
+                            <b-input v-model="service.git_link" placeholder="https://github.com/company/repo/pull/123"></b-input>
+                        </div>
+                        <div class="field">
+                            <div class="control">
+                                <button @click="removeService(index)" class="button is-danger is-small">
+                                    <span class="icon">
+                                        <i class="fas fa-trash"></i>
+                                    </span>
+                                    <span>Удалить услугу</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                     <div class="field">
@@ -174,19 +206,37 @@
         margin-right: 10px;
     }
 
-    .services-list {
-        list-style: none;
-        padding: 0;
-        margin: 0;
+    .service-card {
+        border: 1px solid #dbdbdb;
+        border-radius: 4px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        background-color: #fafafa;
+    }
+
+    .service-header {
+        margin-bottom: 0.5rem;
+        color: #363636;
+    }
+
+    .service-description {
+        color: #4a4a4a;
+    }
+
+    .service-description p {
+        margin-bottom: 0.5rem;
     }
 
     .service-item {
-        padding: 0.5rem 0;
-        border-bottom: 1px solid #f0f0f0;
+        border: 1px solid #dbdbdb;
+        border-radius: 4px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        background-color: #fafafa;
     }
 
     .service-item:last-child {
-        border-bottom: none;
+        margin-bottom: 0;
     }
 
     .services-container {
@@ -223,7 +273,13 @@ export default {
       if (!this.customer.services_description) {
         this.customer.services_description = []
       }
-      this.customer.services_description.push('')
+      this.customer.services_description.push({
+        name: '',
+        description: '',
+        postDescription: '',
+        jira_link: '',
+        git_link: ''
+      })
     },
     removeService (index) {
       this.customer.services_description.splice(index, 1)
@@ -234,7 +290,10 @@ export default {
       const customerToSave = {
         ...this.customer,
         services_description: this.customer.services_description
-          ? this.customer.services_description.filter(service => service.trim() !== '') : []
+          ? this.customer.services_description.filter(service =>
+            service.name && service.name.trim() !== '' &&
+              service.description && service.description.trim() !== ''
+          ) : []
       }
 
       await CustomerService.updateCustomer(this.$route.params.id, customerToSave).then(({data}) => {
